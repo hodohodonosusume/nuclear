@@ -269,15 +269,15 @@ class FusionGame {
             this.showMessage('反応させる元素を2つ選択してください');
             return;
         }
-    
+
         const rule = this.findFusionRule(slot1, slot2);
         if (!rule) {
             this.showMessage('この組み合わせでは核融合できません');
             return;
         }
-    
+
         if (this.gameState.temperature < rule.temperature_required) {
-            this.showMessage(`温度が不足しています。${rule.temperature_required}°C以上必要です`);
+        this.showMessage(`温度が不足しています。${rule.temperature_required}°C以上必要です`);
             return;
         }
     
@@ -286,7 +286,6 @@ class FusionGame {
         const isSuccess = Math.random() < successChance;
     
         if (isSuccess) {
-            // ★ここが重要：成功時の処理を追加
             this.handleFusionSuccess(rule, slot1, slot2);
         } else {
             this.showMessage('核融合に失敗しました');
@@ -295,9 +294,9 @@ class FusionGame {
     
         this.clearReaction();
         this.updateDisplay();
-    }    
+    }
 
-    // ★新しく追加するメソッド
+    // 新しく追加する必要があるメソッド
     handleFusionSuccess(rule, slot1, slot2) {
         // エネルギー増加
         this.gameState.energy += rule.energy;
@@ -322,18 +321,17 @@ class FusionGame {
         // 反応物を消費
         this.consumeReactants(slot1, slot2);
         
-        // 成功メッセージ表示
+        // 成功メッセージとモーダル表示
         this.showFusionResult(rule);
         
         // パーティクルエフェクト
         this.createFusionParticles();
     }
     
-    // ★反応物消費メソッドも修正
     consumeReactants(slot1, slot2) {
         this.gameState.inventory[slot1]--;
         this.gameState.inventory[slot2]--;
-        
+    
         // インベントリが0になった場合の処理
         if (this.gameState.inventory[slot1] <= 0) {
             delete this.gameState.inventory[slot1];
@@ -343,10 +341,50 @@ class FusionGame {
         }
     }
     
-    // ★アンロックメッセージ表示
+    showFusionResult(rule) {
+        const modal = document.getElementById('result-modal');
+        const resultText = document.getElementById('result-text');
+        const resultElements = document.getElementById('result-elements');
+        const resultEnergy = document.getElementById('result-energy');
+        
+        resultText.textContent = '核融合成功！';
+        
+        // 生成された元素を表示
+        const productNames = rule.products.map(id => this.gameData.elements[id].symbol).join(' + ');
+        resultElements.textContent = productNames;
+        
+        // エネルギーを表示
+        resultEnergy.textContent = `+${rule.energy} MeV`;
+        
+        modal.classList.add('active');
+    }
+    
     showUnlockMessage(elementId) {
         const element = this.gameData.elements[elementId];
         this.showMessage(`新元素発見！${element.name} (${element.symbol}) がアンロックされました！`);
+    }
+    
+    createFusionParticles() {
+        // パーティクルエフェクトの実装
+        for (let i = 0; i < 20; i++) {
+            this.particles.push({
+                x: this.canvas.width / 2,
+                y: this.canvas.height / 2,
+                vx: (Math.random() - 0.5) * 10,
+                vy: (Math.random() - 0.5) * 10,
+                life: 1.0,
+                decay: 0.02,
+                color: `hsl(${Math.random() * 60 + 180}, 70%, 60%)`
+            });
+        }
+    }
+
+
+    findFusionRule(element1, element2) {
+        return this.gameData.fusion_rules.find(rule => {
+            const [r1, r2] = rule.reactants;
+            return (r1 == element1 && r2 == element2) || (r1 == element2 && r2 == element1);
+        });
     }
     
     executeFusion(reaction) {
