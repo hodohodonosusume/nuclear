@@ -1,0 +1,184 @@
+{
+  "elements": {
+    "1": {
+      "name": "Hydrogen",
+      "symbol": "H",
+      "atomic_number": 1,
+      "mass": 1.008,
+      "neutrons": 0,
+      "color": "#ff6b6b",
+      "fusible": true,
+      "rarity": "common",
+      "description": "最も軽い元素。核融合の基本材料。"
+    },
+    "2": {
+      "name": "Deuterium",
+      "symbol": "²H",
+      "atomic_number": 1,
+      "mass": 2.014,
+      "neutrons": 1,
+      "color": "#4ecdc4",
+      "fusible": true,
+      "rarity": "uncommon",
+      "description": "重水素。水の約0.015%に含まれる。"
+    },
+    "3": {
+      "name": "Tritium",
+      "symbol": "³H",
+      "atomic_number": 1,
+      "mass": 3.016,
+      "neutrons": 2,
+      "color": "#45b7d1",
+      "fusible": true,
+      "rarity": "rare",
+      "description": "三重水素。放射性同位体。"
+    },
+    "4": {
+      "name": "Helium-3",
+      "symbol": "³He",
+      "atomic_number": 2,
+      "mass": 3.016,
+      "neutrons": 1,
+      "color": "#96ceb4",
+      "fusible": true,
+      "rarity": "very_rare",
+      "description": "希少な核融合燃料。月面に豊富。"
+    },
+    "5": {
+      "name": "Helium-4",
+      "symbol": "⁴He",
+      "atomic_number": 2,
+      "mass": 4.003,
+      "neutrons": 2,
+      "color": "#feca57",
+      "fusible": false,
+      "rarity": "common",
+      "description": "最も安定したヘリウム同位体。"
+    },
+    "6": {
+      "name": "Lithium",
+      "symbol": "Li",
+      "atomic_number": 3,
+      "mass": 6.941,
+      "neutrons": 3,
+      "color": "#ff9ff3",
+      "fusible": true,
+      "rarity": "uncommon",
+      "description": "三重水素の生産に使用。"
+    },
+    "7": {
+      "name": "Beryllium",
+      "symbol": "Be",
+      "atomic_number": 4,
+      "mass": 9.012,
+      "neutrons": 5,
+      "color": "#54a0ff",
+      "fusible": true,
+      "rarity": "rare",
+      "description": "中性子源として使用。"
+    },
+    "8": {
+      "name": "Boron",
+      "symbol": "B",
+      "atomic_number": 5,
+      "mass": 10.811,
+      "neutrons": 5,
+      "color": "#5f27cd",
+      "fusible": true,
+      "rarity": "uncommon",
+      "description": "プロトン-ボロン核融合に使用。"
+    },
+    "9": {
+      "name": "Carbon",
+      "symbol": "C",
+      "atomic_number": 6,
+      "mass": 12.011,
+      "neutrons": 6,
+      "color": "#00d2d3",
+      "fusible": true,
+      "rarity": "common",
+      "description": "恒星内核融合の産物。"
+    }
+  },
+  "fusion_rules": [
+    {
+      "reactants": [
+        1,
+        1
+      ],
+      "products": [
+        2
+      ],
+      "energy": 1.4,
+      "probability": 0.1,
+      "temperature_required": 10
+    },
+    {
+      "reactants": [
+        1,
+        2
+      ],
+      "products": [
+        4
+      ],
+      "energy": 5.5,
+      "probability": 0.6,
+      "temperature_required": 50
+    },
+    {
+      "reactants": [
+        2,
+        3
+      ],
+      "products": [
+        5
+      ],
+      "energy": 17.6,
+      "probability": 0.9,
+      "temperature_required": 100
+    },
+    {
+      "reactants": [
+        2,
+        2
+      ],
+      "products": [
+        4
+      ],
+      "energy": 3.3,
+      "probability": 0.5,
+      "temperature_required": 80
+    },
+    {
+      "reactants": [
+        4,
+        4
+      ],
+      "products": [
+        5,
+        1,
+        1
+      ],
+      "energy": 12.9,
+      "probability": 0.7,
+      "temperature_required": 150
+    }
+  ],
+  "config": {
+    "initial_energy": 100,
+    "energy_per_click": 1,
+    "temperature_decay_rate": 0.95,
+    "fusion_success_base": 0.5,
+    "score_multiplier": 10,
+    "max_temperature": 1000,
+    "unlock_thresholds": {
+      "deuterium": 50,
+      "tritium": 200,
+      "helium3": 500,
+      "lithium": 1000,
+      "beryllium": 2000,
+      "boron": 5000,
+      "carbon": 10000
+    }
+  }
+}

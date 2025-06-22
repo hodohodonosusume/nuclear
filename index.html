@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>核融合パズル - Nuclear Fusion Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="#" id="manifest-placeholder">
+    <meta name="theme-color" content="#21808d">
+    <meta name="description" content="科学的に正確な核融合反応を学べるパズルゲーム">
+</head>
+<body>
+    <!-- スタートアップ画面 -->
+    <div id="startup-screen" class="screen active">
+        <div class="startup-content">
+            <h1 class="game-title">核融合パズル</h1>
+            <div class="fusion-image">
+                <img src="https://pplx-res.cloudinary.com/image/upload/v1750467125/gpt4o_images/nvz6fqhspbbdxjctwjxe.png" alt="核融合反応" class="reaction-image">
+            </div>
+            <p class="game-description">軽元素を組み合わせて核融合反応を起こし、<br>エネルギーを生成しながら新しい元素を発見しよう！</p>
+            <button class="btn btn--primary btn--lg btn--full-width" id="start-game">ゲーム開始</button>
+            <button class="btn btn--secondary btn--lg btn--full-width mt-8" id="show-tutorial">チュートリアル</button>
+        </div>
+    </div>
+
+    <!-- チュートリアル画面 -->
+    <div id="tutorial-screen" class="screen">
+        <div class="tutorial-content">
+            <h2>遊び方</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>元素を選択</h3>
+                        <p>下部の元素パレットから反応させたい元素を選びます</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>反応容器に配置</h3>
+                        <p>選んだ元素を中央の反応容器にドラッグします</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>温度を上げて反応開始</h3>
+                        <p>温度ボタンをクリックして必要温度まで上げ、反応を開始します</p>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>エネルギーと新元素を獲得</h3>
+                        <p>成功すると新しい元素とエネルギーを獲得できます</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn--primary btn--lg btn--full-width" id="start-from-tutorial">ゲーム開始</button>
+            <button class="btn btn--outline" id="back-to-startup">戻る</button>
+        </div>
+    </div>
+
+    <!-- メインゲーム画面 -->
+    <div id="game-screen" class="screen">
+        <!-- ヘッダー情報 -->
+        <div class="game-header">
+            <div class="stat-display">
+                <div class="stat-item">
+                    <span class="stat-label">エネルギー</span>
+                    <span class="stat-value" id="energy-display">100</span>
+                    <span class="stat-unit">MeV</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">温度</span>
+                    <span class="stat-value" id="temperature-display">0</span>
+                    <span class="stat-unit">M°C</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">スコア</span>
+                    <span class="stat-value" id="score-display">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 反応容器エリア -->
+        <div class="reaction-area">
+            <div class="reaction-vessel" id="reaction-vessel">
+                <div class="vessel-background"></div>
+                <div class="temperature-gauge">
+                    <div class="gauge-fill" id="temperature-gauge-fill"></div>
+                </div>
+                <div class="reaction-slots">
+                    <div class="reaction-slot" id="slot-1" data-slot="1"></div>
+                    <div class="reaction-slot" id="slot-2" data-slot="2"></div>
+                </div>
+                <div class="reaction-result" id="reaction-result"></div>
+            </div>
+        </div>
+
+        <!-- 元素パレット -->
+        <div class="element-palette">
+            <h3>利用可能な元素</h3>
+            <div class="palette-grid" id="element-grid">
+                <!-- 元素は JavaScript で動的生成 -->
+            </div>
+        </div>
+
+        <!-- 制御パネル -->
+        <div class="control-panel">
+            <div class="temperature-control">
+                <button class="btn btn--secondary" id="heat-button">🔥 加熱 (+10M°C)</button>
+                <div class="temperature-info">
+                    <span id="required-temp-info">必要温度: --</span>
+                </div>
+            </div>
+            <div class="reaction-control">
+                <button class="btn btn--primary btn--lg" id="fuse-button" disabled>核融合開始</button>
+                <button class="btn btn--outline" id="clear-button">クリア</button>
+            </div>
+        </div>
+
+        <!-- 反応式表示 -->
+        <div class="reaction-info" id="reaction-info">
+            <div class="reaction-equation" id="reaction-equation"></div>
+            <div class="reaction-energy" id="reaction-energy"></div>
+        </div>
+    </div>
+
+    <!-- 結果表示モーダル -->
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="result-title">核融合成功！</h3>
+            <div id="result-content">
+                <div class="result-elements" id="result-elements"></div>
+                <div class="result-energy" id="result-energy"></div>
+                <div class="result-unlock" id="result-unlock"></div>
+            </div>
+            <button class="btn btn--primary" id="continue-button">続ける</button>
+        </div>
+    </div>
+
+    <!-- パーティクル効果用キャンバス -->
+    <canvas id="particle-canvas"></canvas>
+
+    <script src="app.js"></script>
+</body>
+</html>
