@@ -125,8 +125,8 @@ class FusionGame {
             }
 
             button.innerHTML = `
-                <div class="rarity-glow"></div>
                 <div class="element-symbol">${element.symbol}</div>
+                <div class="element-count">${count}</div>
             `;
 
             if (isUnlocked) {
@@ -162,6 +162,7 @@ class FusionGame {
         
         this.updateReactionSlots();
         this.updateDisplay();
+        this.renderElements(); // 在庫数を更新
         this.checkReactionPossibility();
     }
 
@@ -170,7 +171,7 @@ class FusionGame {
             const slot = document.getElementById(`slot-${index + 1}`);
             if (elementId) {
                 const element = this.gameData.elements[elementId];
-                slot.innerHTML = `<div class="element-symbol" style="color: ${element.color}; font-weight: bold;">${element.symbol}</div>`;
+                slot.innerHTML = `${element.symbol}`;
                 slot.classList.add('filled');
             } else {
                 slot.innerHTML = '';
@@ -277,21 +278,21 @@ class FusionGame {
         }
 
         if (this.gameState.temperature < rule.temperature_required) {
-        this.showMessage(`温度が不足しています。${rule.temperature_required}°C以上必要です`);
+            this.showMessage(`温度が不足しています。${rule.temperature_required}°C以上必要です`);
             return;
         }
-    
+        
         // 成功判定
         const successChance = rule.probability * (this.gameState.temperature / rule.temperature_required);
         const isSuccess = Math.random() < successChance;
-    
+        
         if (isSuccess) {
             this.handleFusionSuccess(rule, slot1, slot2);
         } else {
             this.showMessage('核融合に失敗しました');
             this.consumeReactants(slot1, slot2);
         }
-    
+        
         this.clearReaction();
         this.updateDisplay();
     }
@@ -326,12 +327,15 @@ class FusionGame {
         
         // パーティクルエフェクト
         this.createFusionParticles();
+        
+        // 元素リストを更新（これが重要！）
+        this.renderElements();
     }
     
     consumeReactants(slot1, slot2) {
         this.gameState.inventory[slot1]--;
         this.gameState.inventory[slot2]--;
-    
+        
         // インベントリが0になった場合の処理
         if (this.gameState.inventory[slot1] <= 0) {
             delete this.gameState.inventory[slot1];
@@ -378,7 +382,6 @@ class FusionGame {
             });
         }
     }
-
 
     findFusionRule(element1, element2) {
         return this.gameData.fusion_rules.find(rule => {
@@ -501,6 +504,7 @@ class FusionGame {
         this.gameState.reactionSlots = [null, null];
         this.updateReactionSlots();
         this.updateDisplay();
+        this.renderElements(); // 在庫数を更新
         this.checkReactionPossibility();
     }
 
