@@ -5,28 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>核融合パズル - Nuclear Fusion Game</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="#" id="manifest-placeholder">
-    <meta name="theme-color" content="#21808d">
-    <meta name="description" content="科学的に正確な核融合反応を学べるパズルゲーム">
 </head>
 <body>
-    <!-- スタートアップ画面 -->
+    <!-- Particle canvas for effects -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Startup Screen -->
     <div id="startup-screen" class="screen active">
         <div class="startup-content">
             <h1 class="game-title">核融合パズル</h1>
+            
             <div class="fusion-image">
-                <img src="https://pplx-res.cloudinary.com/image/upload/v1750467125/gpt4o_images/nvz6fqhspbbdxjctwjxe.png" alt="核融合反応" class="reaction-image">
+                <img src="https://via.placeholder.com/300x200/4ecdc4/ffffff?text=Nuclear+Fusion" alt="核融合反応" class="reaction-image">
             </div>
-            <p class="game-description">軽元素を組み合わせて核融合反応を起こし、<br>エネルギーを生成しながら新しい元素を発見しよう！</p>
-            <button class="btn btn--primary btn--lg btn--full-width" id="start-game">ゲーム開始</button>
-            <button class="btn btn--secondary btn--lg btn--full-width mt-8" id="show-tutorial">チュートリアル</button>
+            
+            <p class="game-description">
+                軽元素を組み合わせて核融合反応を起こし、<br>
+                エネルギーを生成しながら新しい元素を発見しよう！
+            </p>
+            
+            <div class="button-group">
+                <button id="start-game" class="btn btn--primary btn--lg">ゲーム開始</button>
+                <button id="show-tutorial" class="btn btn--secondary btn--lg">遊び方</button>
+            </div>
         </div>
     </div>
 
-    <!-- チュートリアル画面 -->
+    <!-- Tutorial Screen -->
     <div id="tutorial-screen" class="screen">
         <div class="tutorial-content">
             <h2>遊び方</h2>
+            
             <div class="tutorial-steps">
                 <div class="tutorial-step">
                     <div class="step-number">1</div>
@@ -35,6 +44,7 @@
                         <p>下部の元素パレットから反応させたい元素を選びます</p>
                     </div>
                 </div>
+                
                 <div class="tutorial-step">
                     <div class="step-number">2</div>
                     <div class="step-content">
@@ -42,6 +52,7 @@
                         <p>選んだ元素を中央の反応容器にドラッグします</p>
                     </div>
                 </div>
+                
                 <div class="tutorial-step">
                     <div class="step-number">3</div>
                     <div class="step-content">
@@ -49,6 +60,7 @@
                         <p>温度ボタンをクリックして必要温度まで上げ、反応を開始します</p>
                     </div>
                 </div>
+                
                 <div class="tutorial-step">
                     <div class="step-number">4</div>
                     <div class="step-content">
@@ -57,14 +69,17 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn--primary btn--lg btn--full-width" id="start-from-tutorial">ゲーム開始</button>
-            <button class="btn btn--outline" id="back-to-startup">戻る</button>
+            
+            <div class="button-group">
+                <button id="start-from-tutorial" class="btn btn--primary">ゲーム開始</button>
+                <button id="back-to-startup" class="btn btn--secondary">戻る</button>
+            </div>
         </div>
     </div>
 
-    <!-- メインゲーム画面 -->
+    <!-- Game Screen -->
     <div id="game-screen" class="screen">
-        <!-- ヘッダー情報 -->
+        <!-- Game Header -->
         <div class="game-header">
             <div class="stat-display">
                 <div class="stat-item">
@@ -84,65 +99,66 @@
             </div>
         </div>
 
-        <!-- 反応容器エリア -->
-        <div class="reaction-area">
-            <div class="reaction-vessel" id="reaction-vessel">
-                <div class="vessel-background"></div>
-                <div class="temperature-gauge">
-                    <div class="gauge-fill" id="temperature-gauge-fill"></div>
+        <!-- Game Layout (横並び) -->
+        <div class="game-layout">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Reaction Area -->
+                <div class="reaction-area">
+                    <div id="reaction-vessel" class="reaction-vessel">
+                        <div class="vessel-background"></div>
+                        <div id="temperature-gauge" class="temperature-gauge">
+                            <div id="temperature-gauge-fill" class="gauge-fill"></div>
+                        </div>
+                        <div class="reaction-slots">
+                            <div id="slot-1" class="reaction-slot"></div>
+                            <div id="slot-2" class="reaction-slot"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="reaction-slots">
-                    <div class="reaction-slot" id="slot-1" data-slot="1"></div>
-                    <div class="reaction-slot" id="slot-2" data-slot="2"></div>
+
+                <!-- Control Panel -->
+                <div class="control-panel">
+                    <div class="temperature-control">
+                        <button id="heat-button" class="btn btn--primary btn--full-width">温度を上げる</button>
+                        <div class="temperature-info" id="required-temp-info">必要温度: --</div>
+                    </div>
+                    <div class="reaction-control">
+                        <button id="fuse-button" class="btn btn--primary btn--full-width" disabled>核融合開始</button>
+                        <button id="clear-button" class="btn btn--secondary btn--full-width">リセット</button>
+                    </div>
                 </div>
-                <div class="reaction-result" id="reaction-result"></div>
-            </div>
-        </div>
 
-        <!-- 元素パレット -->
-        <div class="element-palette">
-            <h3>利用可能な元素</h3>
-            <div class="palette-grid" id="element-grid">
-                <!-- 元素は JavaScript で動的生成 -->
-            </div>
-        </div>
-
-        <!-- 制御パネル -->
-        <div class="control-panel">
-            <div class="temperature-control">
-                <button class="btn btn--secondary" id="heat-button">🔥 加熱 (+10M°C)</button>
-                <div class="temperature-info">
-                    <span id="required-temp-info">必要温度: --</span>
+                <!-- Reaction Info -->
+                <div class="reaction-info">
+                    <div id="reaction-equation" class="reaction-equation">元素を2つ配置してください</div>
+                    <div id="reaction-energy" class="reaction-energy"></div>
                 </div>
             </div>
-            <div class="reaction-control">
-                <button class="btn btn--primary btn--lg" id="fuse-button" disabled>核融合開始</button>
-                <button class="btn btn--outline" id="clear-button">クリア</button>
-            </div>
-        </div>
 
-        <!-- 反応式表示 -->
-        <div class="reaction-info" id="reaction-info">
-            <div class="reaction-equation" id="reaction-equation"></div>
-            <div class="reaction-energy" id="reaction-energy"></div>
+            <!-- Right Column -->
+            <div class="right-column">
+                <!-- Element Palette -->
+                <div class="element-palette">
+                    <h3>利用可能な元素</h3>
+                    <div id="element-grid" class="palette-grid">
+                        <!-- Elements will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 結果表示モーダル -->
+    <!-- Result Modal -->
     <div id="result-modal" class="modal">
         <div class="modal-content">
-            <h3 id="result-title">核融合成功！</h3>
-            <div id="result-content">
-                <div class="result-elements" id="result-elements"></div>
-                <div class="result-energy" id="result-energy"></div>
-                <div class="result-unlock" id="result-unlock"></div>
-            </div>
-            <button class="btn btn--primary" id="continue-button">続ける</button>
+            <h2 id="result-title">核融合成功！</h2>
+            <div id="result-elements" class="result-elements"></div>
+            <div id="result-energy" class="result-energy"></div>
+            <div id="result-unlock" class="result-unlock" style="display: none;"></div>
+            <button id="continue-button" class="btn btn--primary">続ける</button>
         </div>
     </div>
-
-    <!-- パーティクル効果用キャンバス -->
-    <canvas id="particle-canvas"></canvas>
 
     <script src="app.js"></script>
 </body>
