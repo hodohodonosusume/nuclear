@@ -1,4 +1,4 @@
-// Nuclear Fusion Puzzle Game
+    // Nuclear Fusion Puzzle Game
 class FusionGame {
     constructor() {
         this.gameData = {
@@ -267,83 +267,92 @@ class FusionGame {
     attemptFusion() {
         const [slot1, slot2] = this.gameState.reactionSlots;
         if (!slot1 || !slot2) {
-            this.showMessage('反応させる元素を2つ選択してください');
+            this.showMessage('元素を2つセットしてね');
             return;
         }
 
         const rule = this.findFusionRule(slot1, slot2);
         if (!rule) {
-            this.showMessage('この組み合わせでは核融合できません');
+            this.showMessage('その組み合わせでは反応しないわ');
             return;
         }
-
+    
         if (this.gameState.temperature < rule.temperature_required) {
-            this.showMessage(`温度が不足しています。${rule.temperature_required}°C以上必要です`);
+            this.showMessage(`${rule.temperature_required}M°C 以上に温度を上げてね`);
             return;
         }
-        
-        // 成功判定
-        const successChance = rule.probability * (this.gameState.temperature / rule.temperature_required);
+    
+        /*-------★ 温度依存の成功率計算 ★-------*
+         * rule.probability : その反応の基礎成功率 (0〜1)
+         * tempRatio        : 必要温度を 1 としたときの倍率
+         * 成功率 = 基礎成功率 × (tempRatio / (1 + tempRatio - 1))
+         * → tempRatio が 1 なら基礎成功率そのまま
+         * → tempRatio が無限大でも 1 には届かず 0.99 で打ち止め
+         *---------------------------------------*/
+        const tempRatio     = this.gameState.temperature / rule.temperature_required;
+        const successChance = Math.min(
+            (rule.probability * tempRatio) / (1 + tempRatio - 1),
+            0.99
+        );
+
         const isSuccess = Math.random() < successChance;
-        
+
         if (isSuccess) {
             this.handleFusionSuccess(rule, slot1, slot2);
         } else {
-            this.showMessage('核融合に失敗しました');
-            this.consumeReactants(slot1, slot2);
+            this.showMessage('核融合に失敗… 次はうまくいくかも？');
+            this.consumeReactants(slot1, slot2);   // 反応物は失われる
+            this.clearReaction();                  // スロットだけクリア
         }
-        
-        this.clearReaction();
+    
         this.updateDisplay();
     }
 
-    // 新しく追加する必要があるメソッド
     handleFusionSuccess(rule, slot1, slot2) {
-        // エネルギー増加
-        this.gameState.energy += rule.energy;
-        
-        // スコア増加
-        this.gameState.score += rule.energy * this.gameData.config.score_multiplier;
-        
-        // 生成物をインベントリに追加
-        rule.products.forEach(productId => {
-            if (!this.gameState.inventory[productId]) {
-                this.gameState.inventory[productId] = 0;
-            }
-            this.gameState.inventory[productId]++;
-            
-            // 新元素のアンロック処理
-            if (!this.gameState.unlockedElements.includes(productId)) {
-                this.gameState.unlockedElements.push(productId);
-                this.showUnlockMessage(productId);
+        /* 1. 生成物をインベントリへ追加 & アンロック判定 */
+        rule.products.forEach(pid => {
+            this.gameState.inventory[pid] = (this.gameState.inventory[pid] || 0) + 1;
+
+            if (!this.gameState.unlockedElements.includes(pid)) {
+                this.gameState.unlockedElements.push(pid);
+                this.showUnlockMessage(pid);
             }
         });
-        
-        // 反応物を消費
+
+        /* 2. エネルギー & スコア加算 */
+        this.gameState.energy += rule.energy;
+        this.gameState.score  += rule.energy * this.gameData.config.score_multiplier;
+
+        /* 3. 反応物消費 */
         this.consumeReactants(slot1, slot2);
-        
-        // 成功メッセージとモーダル表示
-        this.showFusionResult(rule);
-        
-        // パーティクルエフェクト
-        this.createFusionParticles();
-        
-        // 元素リストを更新（これが重要！）
-        this.renderElements();
-    }
     
+        /* 4. 成功演出 */
+        this.showFusionResult(rule);
+        this.createFusionParticles();
+    
+        /* 5. スロットと選択状態を完全リセット
+           （アンロックされた元素を即座に選べるように） */
+        this.gameState.reactionSlots   = [null, null];
+        this.gameState.selectedElements = [];
+        this.updateReactionSlots();
+    
+        /* 6. UI を最新状態へ */
+        this.renderElements();          // パレットを即再描画
+        this.checkReactionPossibility();
+    }
+
     consumeReactants(slot1, slot2) {
         this.gameState.inventory[slot1]--;
         this.gameState.inventory[slot2]--;
-        
-        // インベントリが0になった場合の処理
+            
+            // インベントリが0になった場合の処理
         if (this.gameState.inventory[slot1] <= 0) {
             delete this.gameState.inventory[slot1];
         }
         if (this.gameState.inventory[slot2] <= 0) {
             delete this.gameState.inventory[slot2];
         }
-    }
+       }
     
     showFusionResult(rule) {
         const modal = document.getElementById('result-modal');
