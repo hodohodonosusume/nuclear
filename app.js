@@ -1,31 +1,83 @@
 /* ===================================================================
-   Nuclear Fusion Puzzle – initialization fix (2025-06-28)
-   ・ゲーム開始時に元素リストと所持数を正しくリセット
-   ・タップゾーンでエネルギーと水素を補充
-   ・広告／課金用のフックをコメントで用意
-   ・他の機能はすべて維持
+   Nuclear Fusion Puzzle – "Genesis" Edition (100 Elements)
+   ・元素データと核融合ルールを約100種類に大幅拡張
+   ・ゲームバランスを調整し、後半になるほど難しくなるように
+   ・その他、既存のアップグレードやタップゾーン機能はすべて維持
 =================================================================== */
 class FusionGame {
 
   /* ---------- ゲームデータ ---------- */
   gameData = {
-    elements:{
-      1:{name:'Hydrogen',  symbol:'H',   color:'#ff6b6b'}, 2:{name:'Deuterium', symbol:'²H',  color:'#4ecdc4'},
-      3:{name:'Tritium',   symbol:'³H',  color:'#45b7d1'}, 4:{name:'Helium-3',  symbol:'³He', color:'#96ceb4'},
-      5:{name:'Helium-4',  symbol:'⁴He', color:'#feca57'}, 6:{name:'Lithium-6', symbol:'⁶Li', color:'#ff9ff3'},
-      7:{name:'Beryllium', symbol:'Be',  color:'#54a0ff'}, 8:{name:'Boron',     symbol:'B',   color:'#5f27cd'},
-      9:{name:'Carbon',    symbol:'C',   color:'#00d2d3'}
+    // ★ 元素データを100種類に拡張！
+    elements: {
+      1: { name: "Hydrogen", symbol: "H"    , color: "#ff6b6b" }, 2: { name: "Deuterium", symbol: "²H"   , color: "#ff8c8c" },
+      3: { name: "Tritium", symbol: "³H"   , color: "#ffa2a2" }, 4: { name: "Helium-3", symbol: "³He"  , color: "#ffb7b7" },
+      5: { name: "Helium-4", symbol: "⁴He"  , color: "#ffdada" }, 6: { name: "Lithium-6", symbol: "⁶Li"  , color: "#4ecdc4" },
+      7: { name: "Beryllium-7", symbol: "⁷Be"  , color: "#63d1c9" }, 8: { name: "Boron-8", symbol: "⁸B"   , color: "#77d6ce" },
+      9: { name: "Carbon-9", symbol: "⁹C"   , color: "#8bdbc4" }, 10: { name: "Nitrogen-10", symbol: "¹⁰N"  , color: "#a0e0ba" },
+      11: { name: "Oxium", symbol: "Ox"   , color: "#45b7d1" }, 12: { name: "Fluorium", symbol: "Fl"   , color: "#59bdd5" },
+      13: { name: "Neonium", symbol: "Ne"   , color: "#6dc3da" }, 14: { name: "Sodium", symbol: "Na"   , color: "#81c9df" },
+      15: { name: "Magnesium", symbol: "Mg"   , color: "#96cee5" }, 16: { name: "Aluminium", symbol: "Al"   , color: "#96ceb4" },
+      17: { name: "Silicon", symbol: "Si"   , color: "#a3d3bd" }, 18: { name: "Phosphorus", symbol: "P"    , color: "#b0d8c6" },
+      19: { name: "Sulfur", symbol: "S"    , color: "#bdddd0" }, 20: { name: "Chlorine", symbol: "Cl"   , color: "#cae2d9" },
+      21: { name: "Argonium", symbol: "Ar"   , color: "#feca57" }, 22: { name: "Potassium", symbol: "K"    , color: "#fed470" },
+      23: { name: "Calcium", symbol: "Ca"   , color: "##fedd8a" }, 24: { name: "Scandium", symbol: "Sc"   , color: "#fee7a3" },
+      25: { name: "Titanium", symbol: "Ti"   , color: "#feefbd" }, 26: { name: "Vanadium", symbol: "V"    , color: "#ff9ff3" },
+      27: { name: "Chromium", symbol: "Cr"   , color: "#ffa8f4" }, 28: { name: "Manganese", symbol: "Mn"   , color: "#ffb2f6" },
+      29: { name: "Iron", symbol: "Fe"   , color: "#ffbbf7" }, 30: { name: "Cobalt", symbol: "Co"   , color: "#ffc5f9" },
+      31: { name: "Nickel", symbol: "Ni"   , color: "#54a0ff" }, 32: { name: "Copper", symbol: "Cu"   , color: "#68a9ff" },
+      33: { name: "Zinc", symbol: "Zn"   , color: "#7cb2ff" }, 34: { name: "Gallium", symbol: "Ga"   , color: "#90bbff" },
+      35: { name: "Germanium", symbol: "Ge"   , color: "#a4c4ff" }, 36: { name: "Arsenic", symbol: "As"   , color: "#5f27cd" },
+      37: { name: "Selenium", symbol: "Se"   , color: "#7240d4" }, 38: { name: "Bromine", symbol: "Br"   , color: "#8559da" },
+      39: { name: "Krypton", symbol: "Kr"   , color: "#9872e1" }, 40: { name: "Rubidium", symbol: "Rb"   , color: "#ab8be7" },
+      41: { name: "Strontium", symbol: "Sr"   , color: "#00d2d3" }, 42: { name: "Yttrium", symbol: "Y"    , color: "#19d7d8" },
+      43: { name: "Zirconium", symbol: "Zr"   , color: "#32dddd" }, 44: { name: "Niobium", symbol: "Nb"   , color: "#4ce2e2" },
+      45: { name: "Molybdenum", symbol: "Mo"   , color: "#65e7e7" }, 46: { name: "Technetium", symbol: "Tc"   , color: "#ff6b6b" },
+      47: { name: "Ruthenium", symbol: "Ru"   , color: "#ff8c8c" }, 48: { name: "Rhodium", symbol: "Rh"   , color: "#ffa2a2" },
+      49: { name: "Palladium", symbol: "Pd"   , color: "#ffb7b7" }, 50: { name: "Silver", symbol: "Ag"   , color: "#ffdada" },
+      51: { name: "Cadmium", symbol: "Cd"   , color: "#4ecdc4" }, 52: { name: "Indium", symbol: "In"   , color: "#63d1c9" },
+      53: { name: "Tin", symbol: "Sn"   , color: "#77d6ce" }, 54: { name: "Antimony", symbol: "Sb"   , color: "#8bdbc4" },
+      55: { name: "Tellurium", symbol: "Te"   , color: "#a0e0ba" }, 56: { name: "Iodine", symbol: "I"    , color: "#45b7d1" },
+      57: { name: "Xenon", symbol: "Xe"   , color: "#59bdd5" }, 58: { name: "Caesium", symbol: "Cs"   , color: "#6dc3da" },
+      59: { name: "Barium", symbol: "Ba"   , color: "#81c9df" }, 60: { name: "Lanthanum", symbol: "La"   , color: "#96cee5" },
+      61: { name: "Cerium", symbol: "Ce"   , color: "#96ceb4" }, 62: { name: "Praseodymium", symbol: "Pr"   , color: "#a3d3bd" },
+      63: { name: "Neodymium", symbol: "Nd"   , color: "#b0d8c6" }, 64: { name: "Promethium", symbol: "Pm"   , color: "#bdddd0" },
+      65: { name: "Samarium", symbol: "Sm"   , color: "#cae2d9" }, 66: { name: "Europium", symbol: "Eu"   , color: "#feca57" },
+      67: { name: "Gadolinium", symbol: "Gd"   , color: "#fed470" }, 68: { name: "Terbium", symbol: "Tb"   , color: "##fedd8a" },
+      69: { name: "Dysprosium", symbol: "Dy"   , color: "#fee7a3" }, 70: { name: "Holmium", symbol: "Ho"   , color: "#feefbd" },
+      71: { name: "Erbium", symbol: "Er"   , color: "#ff9ff3" }, 72: { name: "Thulium", symbol: "Tm"   , color: "#ffa8f4" },
+      73: { name: "Ytterbium", symbol: "Yb"   , color: "#ffb2f6" }, 74: { name: "Lutetium", symbol: "Lu"   , color: "#ffbbf7" },
+      75: { name: "Hafnium", symbol: "Hf"   , color: "#ffc5f9" }, 76: { name: "Tantalum", symbol: "Ta"   , color: "#54a0ff" },
+      77: { name: "Tungsten", symbol: "W"    , color: "#68a9ff" }, 78: { name: "Rhenium", symbol: "Re"   , color: "#7cb2ff" },
+      79: { name: "Osmium", symbol: "Os"   , color: "#90bbff" }, 80: { name: "Iridium", symbol: "Ir"   , color: "#a4c4ff" },
+      81: { name: "Platinum", symbol: "Pt"   , color: "#5f27cd" }, 82: { name: "Gold", symbol: "Au"   , color: "#7240d4" },
+      83: { name: "Mercury", symbol: "Hg"   , color: "#8559da" }, 84: { name: "Thallium", symbol: "Tl"   , color: "#9872e1" },
+      85: { name: "Lead", symbol: "Pb"   , color: "#ab8be7" }, 86: { name: "Bismuth", symbol: "Bi"   , color: "#00d2d3" },
+      87: { name: "Polonium", symbol: "Po"   , color: "#19d7d8" }, 88: { name: "Astatine", symbol: "At"   , color: "#32dddd" },
+      89: { name: "Radon", symbol: "Rn"   , color: "#4ce2e2" }, 90: { name: "Francium", symbol: "Fr"   , color: "#65e7e7" },
+      91: { name: "Radium", symbol: "Ra"   , color: "#ff6b6b" }, 92: { name: "Actinium", symbol: "Ac"   , color: "#ff8c8c" },
+      93: { name: "Thorium", symbol: "Th"   , color: "#ffa2a2" }, 94: { name: "Protactinium", symbol: "Pa"   , color: "#ffb7b7" },
+      95: { name: "Uranium", symbol: "U"    , color: "#ffdada" }, 96: { name: "Neptunium", symbol: "Np"   , color: "#4ecdc4" },
+      97: { name: "Plutonium", symbol: "Pu"   , color: "#63d1c9" }, 98: { name: "Americium", symbol: "Am"   , color: "#77d6ce" },
+      99: { name: "Curium", symbol: "Cm"   , color: "#8bdbc4" }, 100: { name: "Berkelium", symbol: "Bk"   , color: "#a0e0ba" }
     },
-    fusionRules:[
-      {r:[1,1], p:[2], e:1.4, prob:0.20, temp:10 }, {r:[1,2], p:[4], e:5.5, prob:0.45, temp:50 },
-      {r:[2,4], p:[5], e:8.0, prob:0.55, temp:80 }, {r:[5,2], p:[6], e:5.0, prob:0.50, temp:90 },
-      {r:[6,1], p:[7], e:8.0, prob:0.45, temp:110}, {r:[7,1], p:[8], e:10,  prob:0.40, temp:130},
-      {r:[8,1], p:[9], e:12,  prob:0.35, temp:150}
-    ],
-    config:{
-      initialEnergy:100, heatIncBase:10, maxTempBase:200, tempDecay:0.95, scoreMul:10,
-      tapZone:{ energyGain:1, hChance:0.3 },
-      upgrade:{ temp:{level:0,inc:50,cost:100}, heat:{level:0,inc:5,cost:50} }
+
+    // ★ 核融合ルールも100種類に対応！[2]
+    fusionRules: [
+        {r: [1,1], p: [2], e: 1.1, prob: 0.99, temp: 10},
+        ...Array.from({length: 98}, (_, i) => ({
+            r: [i + 1, i + 2],
+            p: [i + 3],
+            e: parseFloat((1.2 + i * 0.2).toFixed(2)),
+            prob: parseFloat(Math.max(0.1, 0.98 - i * 0.009).toFixed(2)),
+            temp: 12 + i * 3
+        }))
+    ].flat(),
+
+    config: {
+      initialEnergy: 100, heatIncBase: 10, maxTempBase: 200, tempDecay: 0.95, scoreMul: 10,
+      tapZone: { energyGain: 1, hChance: 0.3 },
+      upgrade: { temp: {level: 0, inc: 50, cost: 100}, heat: {level: 0, inc: 5, cost: 50} }
     }
   };
 
@@ -67,22 +119,12 @@ class FusionGame {
     document.getElementById('continue-button').addEventListener('click',()=>document.getElementById('result-modal').classList.remove('active'));
   }
 
-  /* ★ 修正：ゲーム開始・リセット処理 */
   resetGame(){
     const cfg = this.gameData.config;
-    this.gameState.energy = cfg.initialEnergy;
-    this.gameState.score = 0;
-    this.gameState.temp = 0;
-    this.gameState.unlocked = [1];
-    this.gameState.inventory = { 1: 10 };
-    this.gameState.slots = [null, null];
-
-    cfg.upgrade.temp.level = 0;
-    cfg.upgrade.heat.level = 0;
-
-    this.renderElements();
-    this.updateDisplay();
-    this.updateReactionSlots();
+    this.gameState.energy = cfg.initialEnergy; this.gameState.score = 0; this.gameState.temp = 0;
+    this.gameState.unlocked = [1]; this.gameState.inventory = { 1: 10 }; this.gameState.slots = [null, null];
+    cfg.upgrade.temp.level = 0; cfg.upgrade.heat.level = 0;
+    this.renderElements(); this.updateDisplay(); this.updateReactionSlots();
   }
 
   /* ================== 元素パレット ================== */
@@ -128,7 +170,6 @@ class FusionGame {
       this.gameState.inventory[1]=(this.gameState.inventory[1]||0)+1;
       this.toast('水素(H)をゲット！'); this.renderElements();
     }
-    // 広告／課金フック：if(adWatched){ giveBonus(); }
     this.updateDisplay(); this.createTapParticles();
   }
 
@@ -165,10 +206,12 @@ class FusionGame {
 
   handleFusionSuccess(rule,a,b){
     rule.p.forEach(pid=>{
-      this.gameState.inventory[pid]=(this.gameState.inventory[pid]||0)+1;
-      if(!this.gameState.unlocked.includes(pid)){
-        this.gameState.unlocked.push(pid);
-        this.toast(`新元素 ${this.gameData.elements[pid].symbol} 解放！`);
+      if(this.gameData.elements[pid]){ // 存在しない元素は作らない
+        this.gameState.inventory[pid]=(this.gameState.inventory[pid]||0)+1;
+        if(!this.gameState.unlocked.includes(pid)){
+          this.gameState.unlocked.push(pid);
+          this.toast(`新元素 ${this.gameData.elements[pid].symbol} 解放！`);
+        }
       }
     });
     this.gameState.energy += rule.e;
@@ -217,7 +260,7 @@ class FusionGame {
     if(!a||!b){ this.eqDisp.textContent='元素を2つ配置してね'; this.enDisp.textContent=''; this.fuseBtn.disabled=true; return; }
     const rule=this.findFusionRule(a,b);
     if(rule){
-      this.eqDisp.textContent = `${this.gameData.elements[a].symbol} + ${this.gameData.elements[b].symbol} → ${rule.p.map(id=>this.gameData.elements[id].symbol).join(' + ')}`;
+      this.eqDisp.textContent = `${this.gameData.elements[a].symbol} + ${this.gameData.elements[b].symbol} → ${rule.p.map(id=>this.gameData.elements[id] ? this.gameData.elements[id].symbol : '?').join(' + ')}`;
       this.enDisp.textContent=`+${rule.e} MeV`; this.fuseBtn.disabled = this.gameState.temp < rule.temp;
     }else{ this.eqDisp.textContent='未知の反応'; this.enDisp.textContent=''; this.fuseBtn.disabled=true; }
   }
@@ -236,7 +279,7 @@ class FusionGame {
 
   showResultModal(rule){
     document.getElementById('result-title').textContent='核融合成功！';
-    document.getElementById('result-elements').textContent=rule.p.map(id=>this.gameData.elements[id].symbol).join(' + ');
+    document.getElementById('result-elements').textContent=rule.p.map(id=>this.gameData.elements[id] ? this.gameData.elements[id].symbol : '???').join(' + ');
     document.getElementById('result-energy').textContent=`+${rule.e} MeV`;
     document.getElementById('result-modal').classList.add('active');
   }
