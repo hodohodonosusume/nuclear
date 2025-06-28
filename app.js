@@ -289,10 +289,14 @@ class FusionGame {
          * → tempRatio が 1 なら基礎成功率そのまま
          * → tempRatio が無限大でも 1 には届かず 0.99 で打ち止め
          *---------------------------------------*/
-        const tempRatio     = this.gameState.temperature / rule.temperature_required;
+        /* ========= attemptFusion() 内の成功率計算を差し替え ========= */
+        const tempRatio = this.gameState.temperature / rule.temperature_required;
+
+        /* 温度が必要値の２倍なら成功率も２倍、
+           ただし最大でも 95% にキャップする単純リニアモデル */
         const successChance = Math.min(
-            (rule.probability * tempRatio) / (1 + tempRatio - 1),
-            0.99
+            rule.probability * tempRatio,
+            0.95
         );
 
         const isSuccess = Math.random() < successChance;
