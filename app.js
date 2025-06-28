@@ -231,21 +231,96 @@ class FusionGame {
   }
 
   cacheDom() {
-    this.canvas = document.getElementById('particle-canvas');
-    this.ctx = this.canvas.getContext('2d');
-    this.grid = document.getElementById('element-grid');
-    // その他のDOM要素取得（前回と同じ）...
-    
-    document.getElementById('start-game').addEventListener('click', () => {
+    // キャンバスとコンテキスト
+    this.canvas        = document.getElementById('particle-canvas');
+    this.ctx           = this.canvas.getContext('2d');
+
+    // 元素パレット
+    this.grid          = document.getElementById('element-grid');
+  
+    // スタート画面ボタン
+    this.startBtn      = document.getElementById('start-game');
+  
+    // ゲーム画面ボタン
+    this.heatBtn       = document.getElementById('heat-button');
+    this.fuseBtn       = document.getElementById('fuse-button');
+    this.clearBtn      = document.getElementById('clear-button');
+  
+    // アップグレードボタン
+    this.upTempBtn     = document.getElementById('upgrade-temp-button');
+    this.upHeatBtn     = document.getElementById('upgrade-heat-button');
+  
+    // タップゾーン
+    this.tapZone       = document.getElementById('tap-zone');
+  
+    // モーダル「続ける」ボタン
+    this.continueBtn   = document.getElementById('continue-button');
+  }
+
+  bindEvents() {
+    // ウィンドウサイズ変更でキャンバスリサイズ
+    window.addEventListener('resize', () => this.resizeCanvas());
+    this.resizeCanvas();
+
+    // スクリーン切替
+    this.startBtn.addEventListener('click', () => {
       document.getElementById('startup-screen').classList.remove('active');
       document.getElementById('game-screen').classList.add('active');
       this.resetGame();
     });
-  }
+  
+    // ゲーム操作
+    this.heatBtn.addEventListener('click',    () => this.increaseTemperature());
+    this.fuseBtn.addEventListener('click',    () => this.attemptFusion());
+    this.clearBtn.addEventListener('click',   () => this.clearReaction());
 
-  bindEvents() {
-    // イベント設定（前回と同じ）...
+    // アップグレード
+    this.upTempBtn.addEventListener('click',  () => this.buyUpgrade('temp'));
+    this.upHeatBtn.addEventListener('click',  () => this.buyUpgrade('heat'));
+
+    // タップゾーン
+    this.tapZone.addEventListener('click',    () => this.handleTapZone());
+  
+    // モーダル閉じる
+    this.continueBtn.addEventListener('click',() => {
+      document.getElementById('result-modal').classList.remove('active');
+    });
+  
+    // 温度自然減衰
+    setInterval(() => this.decayTemperature(), 1000);
   }
+   
+// ウィンドウサイズ変更でキャンバスリサイズ
+window.addEventListener('resize', () => this.resizeCanvas());
+  this.resizeCanvas();
+
+  // スクリーン切替
+  this.startBtn.addEventListener('click', () => {
+    document.getElementById('startup-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    this.resetGame();
+  });
+
+  // ゲーム操作
+  this.heatBtn.addEventListener('click',    () => this.increaseTemperature());
+  this.fuseBtn.addEventListener('click',    () => this.attemptFusion());
+  this.clearBtn.addEventListener('click',   () => this.clearReaction());
+
+  // アップグレード
+  this.upTempBtn.addEventListener('click',  () => this.buyUpgrade('temp'));
+  this.upHeatBtn.addEventListener('click',  () => this.buyUpgrade('heat'));
+
+  // タップゾーン
+  this.tapZone.addEventListener('click',    () => this.handleTapZone());
+
+  // モーダル閉じる
+  this.continueBtn.addEventListener('click',() => {
+    document.getElementById('result-modal').classList.remove('active');
+  });
+
+  // 温度自然減衰
+  setInterval(() => this.decayTemperature(), 1000);
+}
 
   resetGame() {
     const cfg = this.gameData.config;
