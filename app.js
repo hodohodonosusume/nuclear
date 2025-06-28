@@ -1,375 +1,266 @@
 /* ===================================================================
-   Nuclear Fusion Puzzle – tap-zone edition (2025-06-28)
-   ・タップゾーンでエネルギー + 水素ドロップ
-   ・アップグレード／核融合ロジックは前回版を継承
+   Nuclear Fusion Puzzle – initialization fix (2025-06-28)
+   ・ゲーム開始時に元素リストと所持数を正しくリセット
+   ・タップゾーンでエネルギーと水素を補充
    ・広告／課金用のフックをコメントで用意
+   ・他の機能はすべて維持
 =================================================================== */
 class FusionGame {
 
   /* ---------- ゲームデータ ---------- */
   gameData = {
-
-    /* 元素 */
     elements:{
-      1:{name:'Hydrogen',  symbol:'H',   color:'#ff6b6b', rarity:'common',    description:'最も軽い元素'},
-      2:{name:'Deuterium', symbol:'²H',  color:'#4ecdc4', rarity:'uncommon',  description:'重水素'},
-      3:{name:'Tritium',   symbol:'³H',  color:'#45b7d1', rarity:'rare',      description:'三重水素'},
-      4:{name:'Helium-3',  symbol:'³He', color:'#96ceb4', rarity:'very_rare', description:'ヘリウム-3'},
-      5:{name:'Helium-4',  symbol:'⁴He', color:'#feca57', rarity:'common',    description:'安定α粒子'},
-      6:{name:'Lithium-6', symbol:'⁶Li', color:'#ff9ff3', rarity:'uncommon',  description:'リチウム-6'},
-      7:{name:'Beryllium', symbol:'Be',  color:'#54a0ff', rarity:'rare',      description:'ベリリウム'},
-      8:{name:'Boron',     symbol:'B',   color:'#5f27cd', rarity:'uncommon',  description:'ホウ素'},
-      9:{name:'Carbon',    symbol:'C',   color:'#00d2d3', rarity:'common',    description:'炭素'}
+      1:{name:'Hydrogen',  symbol:'H',   color:'#ff6b6b'}, 2:{name:'Deuterium', symbol:'²H',  color:'#4ecdc4'},
+      3:{name:'Tritium',   symbol:'³H',  color:'#45b7d1'}, 4:{name:'Helium-3',  symbol:'³He', color:'#96ceb4'},
+      5:{name:'Helium-4',  symbol:'⁴He', color:'#feca57'}, 6:{name:'Lithium-6', symbol:'⁶Li', color:'#ff9ff3'},
+      7:{name:'Beryllium', symbol:'Be',  color:'#54a0ff'}, 8:{name:'Boron',     symbol:'B',   color:'#5f27cd'},
+      9:{name:'Carbon',    symbol:'C',   color:'#00d2d3'}
     },
-
-    /* 核融合ルール */
     fusionRules:[
-      {reactants:[1,1], products:[2], energy:1.4, probability:0.20, tempReq:10 },
-      {reactants:[1,2], products:[4], energy:5.5, probability:0.45, tempReq:50 },
-      {reactants:[2,4], products:[5], energy:8.0, probability:0.55, tempReq:80 },
-      {reactants:[5,2], products:[6], energy:5.0, probability:0.50, tempReq:90 },
-      {reactants:[6,1], products:[7], energy:8.0, probability:0.45, tempReq:110},
-      {reactants:[7,1], products:[8], energy:10,  probability:0.40, tempReq:130},
-      {reactants:[8,1], products:[9], energy:12,  probability:0.35, tempReq:150}
+      {r:[1,1], p:[2], e:1.4, prob:0.20, temp:10 }, {r:[1,2], p:[4], e:5.5, prob:0.45, temp:50 },
+      {r:[2,4], p:[5], e:8.0, prob:0.55, temp:80 }, {r:[5,2], p:[6], e:5.0, prob:0.50, temp:90 },
+      {r:[6,1], p:[7], e:8.0, prob:0.45, temp:110}, {r:[7,1], p:[8], e:10,  prob:0.40, temp:130},
+      {r:[8,1], p:[9], e:12,  prob:0.35, temp:150}
     ],
-
-    /* 各種設定 */
     config:{
-      initialEnergy     :100,
-      heatIncrementBase :10,
-      maxTempBase       :200,
-      tempDecayRate     :0.95,
-      scoreMul          :10,
-
-      /* タップゾーン */
-      tapZone:{
-        energyGain :1,    // 1タップで得られるエネルギー
-        hChance    :0.30  // Hドロップ確率
-      },
-
-      /* アップグレード */
-      upgrade:{
-        temp:{level:0, inc:50, baseCost:100},
-        heat:{level:0, inc: 5, baseCost: 50}
-      }
+      initialEnergy:100, heatIncBase:10, maxTempBase:200, tempDecay:0.95, scoreMul:10,
+      tapZone:{ energyGain:1, hChance:0.3 },
+      upgrade:{ temp:{level:0,inc:50,cost:100}, heat:{level:0,inc:5,cost:50} }
     }
   };
 
   /* ---------- 状態 ---------- */
-  gameState={
-    energy:0, score:0, temperature:0,
-    unlocked:[1], inventory:{1:10},
-    reactionSlots:[null,null]
-  };
+  gameState={ energy:0, score:0, temp:0, unlocked:[], inventory:{}, slots:[null,null] };
 
-  /* ---------- 初期化 ---------- */
   constructor(){ document.addEventListener('DOMContentLoaded',()=>this.init()); }
 
+  /* ================== 初期化 ================== */
   init(){
     this.cacheDom();
     this.bindEvents();
-    this.resetState();
-    this.renderElements();
-    this.updateDisplay();
+    this.resetGame();
     this.loopParticles();
   }
 
-  /* DOM */
   cacheDom(){
-    /* 主要ノード */
-    this.canvas=document.getElementById('particle-canvas');
-    this.ctx   =this.canvas.getContext('2d');
-    this.grid  =document.getElementById('element-grid');
-
-    /* ボタン */
-    this.heatBtn =document.getElementById('heat-button');
-    this.fuseBtn =document.getElementById('fuse-button');
-    this.clearBtn=document.getElementById('clear-button');
-    this.upTempBtn=document.getElementById('upgrade-temp-button');
-    this.upHeatBtn=document.getElementById('upgrade-heat-button');
-    this.tapZone=document.getElementById('tap-zone');
-
-    /* 表示 */
-    this.energyDisp=document.getElementById('energy-display');
-    this.tempDisp  =document.getElementById('temperature-display');
-    this.scoreDisp =document.getElementById('score-display');
-    this.eqDisp    =document.getElementById('reaction-equation');
-    this.enDisp    =document.getElementById('reaction-energy');
-    this.tempGauge =document.getElementById('temperature-gauge-fill');
-
-    /* 画面遷移 */
-    document.getElementById('start-game')
-            .addEventListener('click',()=>{
-              document.getElementById('startup-screen').classList.remove('active');
-              document.getElementById('game-screen'  ).classList.add   ('active');
-            });
+    this.canvas=document.getElementById('particle-canvas'); this.ctx=this.canvas.getContext('2d');
+    this.grid=document.getElementById('element-grid');
+    this.heatBtn=document.getElementById('heat-button'); this.fuseBtn=document.getElementById('fuse-button');
+    this.clearBtn=document.getElementById('clear-button'); this.upTempBtn=document.getElementById('upgrade-temp-button');
+    this.upHeatBtn=document.getElementById('upgrade-heat-button'); this.tapZone=document.getElementById('tap-zone');
+    this.energyDisp=document.getElementById('energy-display'); this.tempDisp=document.getElementById('temperature-display');
+    this.scoreDisp=document.getElementById('score-display'); this.eqDisp=document.getElementById('reaction-equation');
+    this.enDisp=document.getElementById('reaction-energy'); this.tempGauge=document.getElementById('temperature-gauge-fill');
+    document.getElementById('start-game').addEventListener('click',()=>{
+      document.getElementById('startup-screen').classList.remove('active');
+      document.getElementById('game-screen').classList.add('active');
+      this.resetGame();
+    });
   }
 
-  /* イベント */
   bindEvents(){
-    window.addEventListener('resize',()=>this.resizeCanvas());
-    this.resizeCanvas();
-
-    this.heatBtn .addEventListener('click',()=>this.increaseTemperature());
-    this.fuseBtn .addEventListener('click',()=>this.attemptFusion());
-    this.clearBtn.addEventListener('click',()=>this.clearReaction());
-
-    this.upTempBtn.addEventListener('click',()=>this.buyUpgrade('temp'));
-    this.upHeatBtn.addEventListener('click',()=>this.buyUpgrade('heat'));
-
-    /* ★ タップゾーン */
-    this.tapZone.addEventListener('click',()=>this.handleTapZone());
-
-    /* 温度自然減衰 */
+    window.addEventListener('resize',()=>this.resizeCanvas()); this.resizeCanvas();
+    this.heatBtn.addEventListener('click',()=>this.increaseTemperature()); this.fuseBtn.addEventListener('click',()=>this.attemptFusion());
+    this.clearBtn.addEventListener('click',()=>this.clearReaction()); this.upTempBtn.addEventListener('click',()=>this.buyUpgrade('temp'));
+    this.upHeatBtn.addEventListener('click',()=>this.buyUpgrade('heat')); this.tapZone.addEventListener('click',()=>this.handleTapZone());
     setInterval(()=>this.decayTemperature(),1000);
-
-    /* モーダル */
-    document.getElementById('continue-button')
-            .addEventListener('click',()=>document.getElementById('result-modal').classList.remove('active'));
+    document.getElementById('continue-button').addEventListener('click',()=>document.getElementById('result-modal').classList.remove('active'));
   }
 
-  /* ======= タップゾーン処理 ======= */
+  /* ★ 修正：ゲーム開始・リセット処理 */
+  resetGame(){
+    const cfg = this.gameData.config;
+    this.gameState.energy = cfg.initialEnergy;
+    this.gameState.score = 0;
+    this.gameState.temp = 0;
+    this.gameState.unlocked = [1];
+    this.gameState.inventory = { 1: 10 };
+    this.gameState.slots = [null, null];
+
+    cfg.upgrade.temp.level = 0;
+    cfg.upgrade.heat.level = 0;
+
+    this.renderElements();
+    this.updateDisplay();
+    this.updateReactionSlots();
+  }
+
+  /* ================== 元素パレット ================== */
+  renderElements(){
+    this.grid.innerHTML = '';
+    Object.entries(this.gameData.elements).forEach(([id, el])=>{
+      const unlocked = this.gameState.unlocked.includes(+id);
+      const count = this.gameState.inventory[id] || 0;
+      const btn=document.createElement('div');
+      btn.className = 'element-button' + (unlocked ? '' : ' locked');
+      btn.style.backgroundColor = el.color;
+      btn.innerHTML = `<div class="element-symbol">${el.symbol}</div><div class="element-count">${count}</div>`;
+      if(unlocked){
+        btn.addEventListener('click',()=>this.selectElement(+id));
+        btn.title = `${el.name} (所持: ${count})`;
+      }else{ btn.title = `${el.name} (未発見)`; }
+      this.grid.appendChild(btn);
+    });
+  }
+
+  selectElement(id){
+    if((this.gameState.inventory[id]||0)<=0){ this.toast('在庫がありません'); return; }
+    const slotIdx = this.gameState.slots.indexOf(null);
+    if(slotIdx===-1){ this.toast('スロットが満杯よ'); return; }
+    this.gameState.slots[slotIdx]=id;
+    this.gameState.inventory[id]--;
+    this.updateReactionSlots(); this.renderElements(); this.updateDisplay(); this.checkReactionPossibility();
+  }
+
+  updateReactionSlots(){
+    this.gameState.slots.forEach((id,i)=>{
+      const slot=document.getElementById(`slot-${i+1}`);
+      if(id){ slot.textContent=this.gameData.elements[id].symbol; slot.classList.add('filled'); }
+      else{ slot.textContent=''; slot.classList.remove('filled'); }
+    });
+  }
+
+  /* ================== ゲームプレイ ================== */
   handleTapZone(){
     const tapCfg=this.gameData.config.tapZone;
-
-    /* エネルギー付与 */
     this.gameState.energy += tapCfg.energyGain;
-    /* 一定確率で水素ドロップ */
     if(Math.random()<tapCfg.hChance){
       this.gameState.inventory[1]=(this.gameState.inventory[1]||0)+1;
-      this.toast('H をゲット！');
-      this.renderElements();
+      this.toast('水素(H)をゲット！'); this.renderElements();
     }
-    /* 成長用の広告／課金フック
-       if(adWatched){ giveBonus(); }
-       if(iapPurchased){ hugeEnergy(); } */
-
-    this.updateDisplay();
-    this.createTapParticles();
-  }
-
-  /* ======= 表示 ======= */
-  updateDisplay(){
-    this.energyDisp.textContent=Math.floor(this.gameState.energy);
-    this.tempDisp  .textContent=Math.floor(this.gameState.temperature);
-    this.scoreDisp .textContent=this.gameState.score;
-
-    const ratio=(this.gameState.temperature/this.maxTemperature)*100;
-    this.tempGauge.style.width=`${Math.min(ratio,100)}%`;
-
-    /* アップグレードコスト更新 */
-    const uT=this.gameData.config.upgrade.temp;
-    const uH=this.gameData.config.upgrade.heat;
-    document.getElementById('upgrade-temp-cost').textContent=uT.baseCost*(uT.level+1);
-    document.getElementById('upgrade-heat-cost').textContent=uH.baseCost*(uH.level+1);
-  }
-
-  /* ======= アップグレード ======= */
-  buyUpgrade(type){
-    const up=this.gameData.config.upgrade[type];
-    const cost=up.baseCost*(up.level+1);
-    if(this.gameState.energy<cost){this.toast('エネルギー不足');return;}
-    up.level++; this.gameState.energy-=cost;
-    this.toast(type==='temp'?'最大温度を強化！':'加熱量を強化！');
-    this.updateDisplay();
-  }
-
-  /* ======= 温度操作 ======= */
-  get maxTemperature(){
-    const {maxTempBase,upgrade:{temp}}=this.gameData.config;
-    return maxTempBase+temp.level*temp.inc;
-  }
-  get heatIncrement(){
-    const {heatIncrementBase,upgrade:{heat}}=this.gameData.config;
-    return heatIncrementBase+heat.level*heat.inc;
+    // 広告／課金フック：if(adWatched){ giveBonus(); }
+    this.updateDisplay(); this.createTapParticles();
   }
 
   increaseTemperature(){
-    if(this.gameState.energy<=0){this.toast('エネルギー不足');return;}
-    this.gameState.temperature=Math.min(
-      this.gameState.temperature+this.heatIncrement,
-      this.maxTemperature
-    );
+    if(this.gameState.energy<=0){ this.toast('エネルギー不足'); return; }
+    this.gameState.temp = Math.min(this.gameState.temp + this.heatIncrement, this.maxTemperature);
     this.gameState.energy--;
-    this.updateDisplay();
-    this.checkReactionPossibility();
+    this.updateDisplay(); this.checkReactionPossibility();
   }
+
   decayTemperature(){
-    if(this.gameState.temperature>0){
-      this.gameState.temperature*=this.gameData.config.tempDecayRate;
-      if(this.gameState.temperature<1)this.gameState.temperature=0;
-      this.updateDisplay();
-      this.checkReactionPossibility();
+    if(this.gameState.temp>0){
+      this.gameState.temp *= this.gameData.config.tempDecay;
+      if(this.gameState.temp<1) this.gameState.temp=0;
+      this.updateDisplay(); this.checkReactionPossibility();
     }
   }
 
-  /* ======= 核融合 ======= */
   attemptFusion(){
-    const [a,b]=this.gameState.reactionSlots;
-    if(!a||!b){this.toast('2つ置いてね');return;}
+    const [a,b] = this.gameState.slots;
+    if(!a||!b){ this.toast('元素を2つセットしてね'); return; }
+    const rule = this.findFusionRule(a,b);
+    if(!rule){ this.toast('その組み合わせでは反応しないわ'); return; }
+    if(this.gameState.temp < rule.temp){ this.toast(`${rule.temp}M°C 以上にしてね`); return; }
+    const success = Math.random() < Math.min(rule.prob * (this.gameState.temp / rule.temp), 0.95);
 
-    const rule=this.findFusionRule(a,b);
-    if(!rule){this.toast('反応しない組み合わせ');return;}
-
-    if(this.gameState.temperature<rule.tempReq){
-      this.toast(`${rule.tempReq}M°C 以上必要`);
-      return;
-    }
-
-    const success=Math.random()<Math.min(
-      rule.probability*(this.gameState.temperature/rule.tempReq),
-      0.95
-    );
-
-    if(success){this.handleFusionSuccess(rule,a,b);}
+    if(success){ this.handleFusionSuccess(rule,a,b); }
     else{
-      this.toast('核融合失敗…');
-      this.consumeReactants(a,b);
-      this.clearReaction();
-      this.renderElements();
+      this.toast('核融合失敗…'); this.consumeReactants(a,b);
+      this.clearReaction(); this.renderElements();
     }
     this.updateDisplay();
   }
 
   handleFusionSuccess(rule,a,b){
-    rule.products.forEach(pid=>{
+    rule.p.forEach(pid=>{
       this.gameState.inventory[pid]=(this.gameState.inventory[pid]||0)+1;
       if(!this.gameState.unlocked.includes(pid)){
         this.gameState.unlocked.push(pid);
         this.toast(`新元素 ${this.gameData.elements[pid].symbol} 解放！`);
       }
     });
-
-    this.gameState.energy+=rule.energy;
-    this.gameState.score +=Math.floor(rule.energy*this.gameData.config.scoreMul);
-
+    this.gameState.energy += rule.e;
+    this.gameState.score += Math.floor(rule.e * this.gameData.config.scoreMul);
     this.consumeReactants(a,b);
-
     this.showResultModal(rule);
     this.createFusionParticles();
+    this.gameState.slots = [null,null];
+    this.updateReactionSlots(); this.renderElements(); this.checkReactionPossibility();
+  }
 
-    this.gameState.reactionSlots=[null,null];
-    this.updateReactionSlots();
-    this.renderElements();
-    this.checkReactionPossibility();
+  clearReaction(){
+    this.gameState.slots.forEach(id=>{
+      if(id) this.gameState.inventory[id]=(this.gameState.inventory[id]||0)+1;
+    });
+    this.gameState.slots=[null,null];
+    this.updateReactionSlots(); this.renderElements(); this.checkReactionPossibility();
   }
 
   consumeReactants(x,y){
     [x,y].forEach(id=>{
       this.gameState.inventory[id]--;
-      if(this.gameState.inventory[id]<=0)delete this.gameState.inventory[id];
+      if(this.gameState.inventory[id]<=0) delete this.gameState.inventory[id];
     });
   }
 
-  clearReaction(){
-    this.gameState.reactionSlots.forEach(id=>{
-      if(id){
-        this.gameState.inventory[id]=(this.gameState.inventory[id]||0)+1;
-      }
-    });
-    this.gameState.reactionSlots=[null,null];
-    this.updateReactionSlots();
-    this.renderElements();
+  buyUpgrade(type){
+    const up=this.gameData.config.upgrade[type]; const cost=up.cost*(up.level+1);
+    if(this.gameState.energy<cost){ this.toast('エネルギー不足'); return; }
+    up.level++; this.gameState.energy-=cost;
+    this.toast(type==='temp'?'最大温度を強化！':'加熱量を強化！'); this.updateDisplay();
   }
 
-  /* ======= ルール検索 ======= */
-  findFusionRule(x,y){
-    return this.gameData.fusionRules.find(r=>{
-      const [p,q]=r.reactants;
-      return (p===x&&q===y)||(p===y&&q===x);
-    });
+  /* ================== 表示・UI ================== */
+  updateDisplay(){
+    this.energyDisp.textContent = Math.floor(this.gameState.energy);
+    this.tempDisp.textContent = Math.floor(this.gameState.temp);
+    this.scoreDisp.textContent = this.gameState.score;
+    this.tempGauge.style.width = `${Math.min((this.gameState.temp/this.maxTemperature)*100,100)}%`;
+    const uT=this.gameData.config.upgrade.temp; document.getElementById('upgrade-temp-cost').textContent = uT.cost*(uT.level+1);
+    const uH=this.gameData.config.upgrade.heat; document.getElementById('upgrade-heat-cost').textContent = uH.cost*(uH.level+1);
   }
 
-  /* ======= 反応スロット表示 ======= */
-  updateReactionSlots(){
-    this.gameState.reactionSlots.forEach((id,i)=>{
-      const slot=document.getElementById(`slot-${i+1}`);
-      if(id){
-        slot.textContent=this.gameData.elements[id].symbol;
-        slot.classList.add('filled');
-      }else{
-        slot.textContent='';
-        slot.classList.remove('filled');
-      }
-    });
-  }
-
-  /* ======= 反応可否表示 ======= */
   checkReactionPossibility(){
-    const [a,b]=this.gameState.reactionSlots;
-    if(!a||!b){
-      this.eqDisp.textContent='元素を2つ配置してね';
-      this.enDisp.textContent=''; this.fuseBtn.disabled=true; return;
-    }
+    const [a,b]=this.gameState.slots;
+    if(!a||!b){ this.eqDisp.textContent='元素を2つ配置してね'; this.enDisp.textContent=''; this.fuseBtn.disabled=true; return; }
     const rule=this.findFusionRule(a,b);
     if(rule){
-      this.eqDisp.textContent=
-        `${this.gameData.elements[a].symbol} + ${this.gameData.elements[b].symbol} → ${rule.products.map(id=>this.gameData.elements[id].symbol).join(' + ')}`;
-      this.enDisp.textContent=`+${rule.energy} MeV`;
-      this.fuseBtn.disabled=this.gameState.temperature<rule.tempReq;
-    }else{
-      this.eqDisp.textContent='未知の反応';
-      this.enDisp.textContent=''; this.fuseBtn.disabled=true;
-    }
+      this.eqDisp.textContent = `${this.gameData.elements[a].symbol} + ${this.gameData.elements[b].symbol} → ${rule.p.map(id=>this.gameData.elements[id].symbol).join(' + ')}`;
+      this.enDisp.textContent=`+${rule.e} MeV`; this.fuseBtn.disabled = this.gameState.temp < rule.temp;
+    }else{ this.eqDisp.textContent='未知の反応'; this.enDisp.textContent=''; this.fuseBtn.disabled=true; }
   }
 
-  /* ======= モーダル ======= */
-  showResultModal(rule){
-    document.getElementById('result-title').textContent='核融合成功！';
-    document.getElementById('result-elements').textContent=
-      rule.products.map(id=>this.gameData.elements[id].symbol).join(' + ');
-    document.getElementById('result-energy').textContent=`+${rule.energy} MeV`;
-    document.getElementById('result-modal').classList.add('active');
+  findFusionRule(x,y){
+    return this.gameData.fusionRules.find(rule=>{
+      const [a,b]=rule.r; return (a===x&&b===y)||(a===y&&b===x);
+    });
   }
 
-  /* ======= トースト ======= */
   toast(msg){
-    const t=document.createElement('div');
-    t.textContent=msg;
-    t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);'+
-                    'background:#c0142f;color:#fff;padding:10px 20px;border-radius:8px;z-index:1001;';
+    const t=document.createElement('div'); t.textContent=msg;
+    t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#c0142f;color:#fff;padding:10px 20px;border-radius:8px;z-index:1001;';
     document.body.appendChild(t); setTimeout(()=>t.remove(),2500);
   }
 
-  /* ======= パーティクル ======= */
-  resizeCanvas(){ this.canvas.width=innerWidth; this.canvas.height=innerHeight; }
-  particles=[];
-  createFusionParticles(){ this.spawnParticles('#4ecdc4'); }
-  createTapParticles   (){ this.spawnParticles('#feca57',15); }
+  showResultModal(rule){
+    document.getElementById('result-title').textContent='核融合成功！';
+    document.getElementById('result-elements').textContent=rule.p.map(id=>this.gameData.elements[id].symbol).join(' + ');
+    document.getElementById('result-energy').textContent=`+${rule.e} MeV`;
+    document.getElementById('result-modal').classList.add('active');
+  }
 
+  get maxTemperature(){ const {maxTempBase,upgrade:{temp}}=this.gameData.config; return maxTempBase+temp.level*temp.inc; }
+  get heatIncrement(){ const {heatIncBase,upgrade:{heat}}=this.gameData.config; return heatIncBase+heat.level*heat.inc; }
+
+  /* ================== パーティクル ================== */
+  particles=[]; resizeCanvas(){ this.canvas.width=innerWidth; this.canvas.height=innerHeight; }
+  createFusionParticles(){ this.spawnParticles('#4ecdc4'); } createTapParticles(){ this.spawnParticles('#feca57',15); }
   spawnParticles(color,count=30){
-    const cx=innerWidth/2, cy=innerHeight/2;
-    for(let i=0;i<count;i++){
-      this.particles.push({
-        x:cx,y:cy, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10,
-        life:1,decay:0.02,size:Math.random()*3+1,color
-      });
-    }
+    for(let i=0;i<count;i++) this.particles.push({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-0.5)*10,vy:(Math.random()-0.5)*10,life:1,decay:0.02,size:Math.random()*3+1,color});
   }
   updateParticles(){
     this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
     for(let i=this.particles.length-1;i>=0;i--){
-      const p=this.particles[i];
-      p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
-      if(p.life<=0){this.particles.splice(i,1);continue;}
-      this.ctx.globalAlpha=p.life;
-      this.ctx.fillStyle=p.color;
-      this.ctx.beginPath();this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2);this.ctx.fill();
+      const p=this.particles[i]; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
+      if(p.life<=0){ this.particles.splice(i,1); continue; }
+      this.ctx.globalAlpha=p.life; this.ctx.fillStyle=p.color;
+      this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill();
     }
     this.ctx.globalAlpha=1;
   }
-  loopParticles(){ const loop=()=>{this.updateParticles();requestAnimationFrame(loop);};loop(); }
-
-  /* ======= 状態初期化 ======= */
-  resetState(){
-    const cfg=this.gameData.config;
-    cfg.upgrade.temp.level=0; cfg.upgrade.heat.level=0;
-
-    this.gameState.energy=cfg.initialEnergy;
-    this.gameState.score =0;
-    this.gameState.temperature=0;
-  }
+  loopParticles(){ const loop=()=>{ this.updateParticles(); requestAnimationFrame(loop); }; loop(); }
 }
 
-/* ---------- 起動 ---------- */
 new FusionGame();
