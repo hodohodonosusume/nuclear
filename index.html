@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>核融合パズル - Nuclear Fusion Game</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- 追加：タップゾーン用の簡単なスタイル -->
+  <style>
+    .tap-zone{
+      height:100px;display:flex;align-items:center;justify-content:center;
+      background:var(--color-secondary);border-radius:var(--radius-lg);
+      font-weight:600;cursor:pointer;user-select:none;
+      transition:transform .1s;
+    }
+    .tap-zone:active{transform:scale(.95);}
+  </style>
 </head>
 
 <body>
@@ -15,39 +26,30 @@
   <div id="startup-screen" class="screen active">
     <div class="startup-content">
       <h1 class="game-title">核融合パズル</h1>
-      <p class="game-description">軽元素を組み合わせて核融合エネルギーを獲得しよう！</p>
-      <div class="button-group">
-        <button id="start-game" class="btn btn--primary btn--lg">ゲーム開始</button>
-      </div>
+      <p class="game-description">
+        軽元素を組み合わせて核融合エネルギーを生み出そう！<br>
+        タップゾーンでエネルギーと水素を補充できるわよ
+      </p>
+      <button id="start-game" class="btn btn--primary btn--lg">ゲーム開始</button>
     </div>
   </div>
 
   <!-- ゲーム画面 -->
   <div id="game-screen" class="screen">
-    <!-- 上部ステータスバー -->
+    <!-- ステータスバー -->
     <div class="game-header">
       <div class="stat-display">
-        <div class="stat-item">
-          <span class="stat-label">エネルギー</span>
-          <span class="stat-value" id="energy-display">0</span>
-          <span class="stat-unit">MeV</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">温度</span>
-          <span class="stat-value" id="temperature-display">0</span>
-          <span class="stat-unit">M°C</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">スコア</span>
-          <span class="stat-value" id="score-display">0</span>
-        </div>
+        <div class="stat-item"><span class="stat-label">エネルギー</span><span id="energy-display" class="stat-value">0</span><span class="stat-unit">MeV</span></div>
+        <div class="stat-item"><span class="stat-label">温度</span><span id="temperature-display" class="stat-value">0</span><span class="stat-unit">M°C</span></div>
+        <div class="stat-item"><span class="stat-label">スコア</span><span id="score-display" class="stat-value">0</span></div>
       </div>
     </div>
 
-    <!-- ２カラムレイアウト -->
+    <!-- 2カラム -->
     <div class="game-layout">
-      <!-- 左カラム：反応器＋操作＋アップグレード -->
+      <!-- 左カラム -->
       <div class="left-column">
+
         <!-- 反応容器 -->
         <div class="reaction-area">
           <div id="reaction-vessel" class="reaction-vessel">
@@ -63,9 +65,9 @@
 
         <!-- 操作パネル -->
         <div class="control-panel">
-          <button id="heat-button"   class="btn btn--primary btn--full-width">温度を上げる</button>
-          <button id="fuse-button"   class="btn btn--primary btn--full-width" disabled>核融合開始</button>
-          <button id="clear-button"  class="btn btn--secondary btn--full-width">リセット</button>
+          <button id="heat-button"  class="btn btn--primary btn--full-width">温度を上げる</button>
+          <button id="fuse-button"  class="btn btn--primary btn--full-width" disabled>核融合開始</button>
+          <button id="clear-button" class="btn btn--secondary btn--full-width">リセット</button>
         </div>
 
         <!-- 反応情報 -->
@@ -74,7 +76,7 @@
           <div id="reaction-energy"   class="reaction-energy"></div>
         </div>
 
-        <!-- ★ アップグレードパネル -->
+        <!-- アップグレード -->
         <div class="upgrade-panel">
           <h3>アップグレード</h3>
           <button id="upgrade-temp-button" class="btn btn--outline btn--full-width">
@@ -84,6 +86,12 @@
             加熱量   +5  (Cost: <span id="upgrade-heat-cost">50</span>)
           </button>
         </div>
+
+        <!-- ★ タップゾーン -->
+        <div id="tap-zone" class="tap-zone">
+          タップで<br>エネルギー &amp; H！
+        </div>
+
       </div>
 
       <!-- 右カラム：元素パレット -->
