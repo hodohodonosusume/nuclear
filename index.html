@@ -6,15 +6,31 @@
   <title>核融合パズル - Nuclear Fusion Game</title>
   <link rel="stylesheet" href="style.css">
 
-  <!-- 追加：タップゾーン用の簡単なスタイル -->
+  <!-- ★ 修正：タップゾーン用のスタイルを追加 -->
   <style>
-    .tap-zone{
-      height:100px;display:flex;align-items:center;justify-content:center;
-      background:var(--color-secondary);border-radius:var(--radius-lg);
-      font-weight:600;cursor:pointer;user-select:none;
-      transition:transform .1s;
+    .upgrade-panel, .tap-zone {
+      margin-top: 12px;
     }
-    .tap-zone:active{transform:scale(.95);}
+    .tap-zone {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .1s, box-shadow .1s;
+      text-align: center;
+    }
+    .tap-zone:hover {
+      box-shadow: 0 0 10px var(--color-primary);
+    }
+    .tap-zone:active {
+      transform: scale(.95);
+    }
   </style>
 </head>
 
@@ -28,7 +44,7 @@
       <h1 class="game-title">核融合パズル</h1>
       <p class="game-description">
         軽元素を組み合わせて核融合エネルギーを生み出そう！<br>
-        タップゾーンでエネルギーと水素を補充できるわよ
+        エネルギーが尽きたらタップゾーンで補充してね♡
       </p>
       <button id="start-game" class="btn btn--primary btn--lg">ゲーム開始</button>
     </div>
@@ -45,11 +61,10 @@
       </div>
     </div>
 
-    <!-- 2カラム -->
+    <!-- 2カラムレイアウト -->
     <div class="game-layout">
       <!-- 左カラム -->
       <div class="left-column">
-
         <!-- 反応容器 -->
         <div class="reaction-area">
           <div id="reaction-vessel" class="reaction-vessel">
@@ -87,11 +102,10 @@
           </button>
         </div>
 
-        <!-- ★ タップゾーン -->
+        <!-- ★ 修正：タップゾーン -->
         <div id="tap-zone" class="tap-zone">
-          タップで<br>エネルギー &amp; H！
+          タップで<br>エネルギー &amp; 水素を補充
         </div>
-
       </div>
 
       <!-- 右カラム：元素パレット -->
@@ -110,7 +124,6 @@
       <h2 id="result-title">核融合成功！</h2>
       <div id="result-elements" class="result-elements"></div>
       <div id="result-energy"   class="result-energy"></div>
-      <div id="result-unlock"   class="result-unlock" style="display:none;"></div>
       <button id="continue-button" class="btn btn--primary">続ける</button>
     </div>
   </div>
